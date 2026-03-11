@@ -1,0 +1,96 @@
+import sys
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QLabel,
+    QLineEdit, QPushButton, QTextEdit, QMessageBox
+)
+
+from finance_tracker import FinanceTracker   # jouw bestand
+
+class FinanceApp(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        self.tracker = FinanceTracker()
+
+        self.setWindowTitle("Finance Tracker")
+        self.setGeometry(200, 200, 400, 500)
+
+        layout = QVBoxLayout()
+
+        self.balance_label = QLabel(f"Баланс: {self.tracker.balance}")
+        layout.addWidget(self.balance_label)
+
+        layout.addWidget(QLabel("Сумма"))
+        self.amount_input = QLineEdit()
+        layout.addWidget(self.amount_input)
+
+        layout.addWidget(QLabel("Описание"))
+        self.description_input = QLineEdit()
+        layout.addWidget(self.description_input)
+
+        income_btn = QPushButton("Добавить доход")
+        income_btn.clicked.connect(self.add_income)
+        layout.addWidget(income_btn)
+
+        expense_btn = QPushButton("Добавить расход")
+        expense_btn.clicked.connect(self.add_expense)
+        layout.addWidget(expense_btn)
+
+        show_btn = QPushButton("Показать транзакции за месяц")
+        show_btn.clicked.connect(self.show_month)
+        layout.addWidget(show_btn)
+
+        self.text = QTextEdit()
+        layout.addWidget(self.text)
+
+        self.setLayout(layout)
+
+    def update_balance(self):
+        self.balance_label.setText(f"Баланс: {self.tracker.balance}")
+
+    def add_income(self):
+        try:
+            amount = float(self.amount_input.text())
+            description = self.description_input.text()
+
+            self.tracker.log_transaction("Доход", amount, description)
+            self.update_balance()
+
+            QMessageBox.information(self, "Успех", "Доход добавлен")
+
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Введите правильную сумму")
+
+    def add_expense(self):
+        try:
+            amount = float(self.amount_input.text())
+            description = self.description_input.text()
+
+            self.tracker.log_transaction("Расход", amount, description)
+            self.update_balance()
+
+            QMessageBox.information(self, "Успех", "Расход добавлен")
+
+        except ValueError:
+            QMessageBox.warning(self, "Ошибка", "Введите правильную сумму")
+
+    def show_month(self):
+        transactions = self.tracker.get_monthly_transactions()
+
+        self.text.clear()
+
+        if not transactions:
+            self.text.append("Нет транзакций за этот месяц")
+        else:
+            for t in transactions:
+                line = f"{t['Дата']} | {t['Тип']} | {t['Сумма']} | {t['Описание']}"
+                self.text.append(line)
+
+
+app = QApplication(sys.argv)
+
+window = FinanceApp()
+window.show()
+
+sys.exit(app.exec())
